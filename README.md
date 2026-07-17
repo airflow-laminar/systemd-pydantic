@@ -1,6 +1,6 @@
 # systemd-pydantic
 
-Pydantic models for systemd
+[Pydantic](https://docs.pydantic.dev/latest/) models for systemd service and timer units.
 
 [![Build Status](https://github.com/airflow-laminar/systemd-pydantic/actions/workflows/build.yaml/badge.svg?branch=main&event=push)](https://github.com/airflow-laminar/systemd-pydantic/actions/workflows/build.yaml)
 [![codecov](https://codecov.io/gh/airflow-laminar/systemd-pydantic/branch/main/graph/badge.svg)](https://codecov.io/gh/airflow-laminar/systemd-pydantic)
@@ -8,6 +8,50 @@ Pydantic models for systemd
 [![PyPI](https://img.shields.io/pypi/v/systemd-pydantic.svg)](https://pypi.python.org/pypi/systemd-pydantic)
 
 ## Overview
+
+`systemd-pydantic` provides typed, YAML-friendly models for generating systemd unit files. Timer support lives in this package because timers share systemd's common `[Unit]` and `[Install]` sections and normally activate a matching service unit.
+
+The initial model surface covers common process-supervision and scheduling settings:
+
+- `SystemdServiceConfiguration`: `[Unit]`, `[Service]`, and `[Install]`
+- `SystemdTimerConfiguration`: `[Unit]`, `[Timer]`, and `[Install]`
+- validation for required service commands, `Type=oneshot` command lists, `Type=dbus`, and timer triggers
+- `to_unit_file()` and the ecosystem-compatible `to_cfg()` alias
+
+```python
+from systemd_pydantic import SystemdServiceConfiguration
+
+service = SystemdServiceConfiguration(
+    unit={"description": "Long-running Airflow job"},
+    service={
+        "type": "exec",
+        "exec_start": "/opt/jobs/run",
+        "restart": "on-failure",
+        "restart_sec": "5s",
+        "environment": {"MODE": "production"},
+    },
+    install={"wanted_by": ["multi-user.target"]},
+)
+
+print(service.to_unit_file())
+```
+
+```ini
+[Unit]
+Description=Long-running Airflow job
+
+[Service]
+Type=exec
+ExecStart=/opt/jobs/run
+Restart=on-failure
+RestartSec=5s
+Environment="MODE=production"
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Timer values accept systemd time strings or Python `timedelta` values. Repeated calendar and monotonic triggers render as repeated directives, preserving systemd semantics.
 
 > [!NOTE]
 > This library was generated using [copier](https://copier.readthedocs.io/en/stable/) from the [Base Python Project Template repository](https://github.com/python-project-templates/base).

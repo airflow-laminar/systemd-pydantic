@@ -28,7 +28,9 @@ classifiers = [
     "Programming Language :: Python :: 3.14",
 ]
 
-dependencies = []
+dependencies = [
+    "pydantic>=2",
+]
 
 [project.optional-dependencies]
 develop = [
@@ -141,6 +143,7 @@ section-order = [
 [tool.yardang]
 title = "systemd-pydantic"
 root = "README.md"
-pages = []
-use-autoapi = true
-
+pages = [
+    "docs/src/api.md",
+]
+use-autoapi = false
