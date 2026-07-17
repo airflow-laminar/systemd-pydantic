@@ -3,7 +3,7 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="search.html"><link rel="next" title="API Reference" href="autoapi/index.html">
+<link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="search.html"><link rel="next" title="API Reference" href="docs/src/api.html">
 
     <!-- Generated with Sphinx 8.2.3 and Furo 2025.12.19 -->
         <title>systemd-pydantic v0.1.0</title>
@@ -197,9 +197,8 @@
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
   <ul>
-<li class="toctree-l1 has-children"><a class="reference internal" href="autoapi/index.html">API Reference</a><input aria-label="Toggle navigation of API Reference" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="autoapi/test_all/index.html">test_all</a></li>
-<li class="toctree-l2"><a class="reference internal" href="autoapi/systemd_pydantic/index.html">systemd_pydantic</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="docs/src/api.html">API Reference</a><input aria-label="Toggle navigation of API Reference" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="docs/src/_build/systemd_pydantic.html">systemd_pydantic</a></li>
 </ul>
 </li>
 </ul>
@@ -244,13 +243,53 @@
 </div>
 <section class="tex2jax_ignore mathjax_ignore" id="systemd-pydantic">
 <h1>systemd-pydantic<a class="headerlink" href="#systemd-pydantic" title="Link to this heading">¶</a></h1>
-<p>Pydantic models for systemd</p>
+<p><a class="reference external" href="https://docs.pydantic.dev/latest/">Pydantic</a> models for systemd service and timer units.</p>
 <p><a class="reference external" href="https://github.com/airflow-laminar/systemd-pydantic/actions/workflows/build.yaml"><img alt="Build Status" src="https://github.com/airflow-laminar/systemd-pydantic/actions/workflows/build.yaml/badge.svg?branch=main&amp;event=push" /></a>
 <a class="reference external" href="https://codecov.io/gh/airflow-laminar/systemd-pydantic"><img alt="codecov" src="https://codecov.io/gh/airflow-laminar/systemd-pydantic/branch/main/graph/badge.svg" /></a>
 <a class="reference external" href="https://github.com/airflow-laminar/systemd-pydantic"><img alt="License" src="https://img.shields.io/github/license/airflow-laminar/systemd-pydantic" /></a>
 <a class="reference external" href="https://pypi.python.org/pypi/systemd-pydantic"><img alt="PyPI" src="https://img.shields.io/pypi/v/systemd-pydantic.svg" /></a></p>
 <section id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">systemd-pydantic</span></code> provides typed, YAML-friendly models for generating systemd unit files. Timer support lives in this package because timers share systemd’s common <code class="docutils literal notranslate"><span class="pre">[Unit]</span></code> and <code class="docutils literal notranslate"><span class="pre">[Install]</span></code> sections and normally activate a matching service unit.</p>
+<p>The initial model surface covers common process-supervision and scheduling settings:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">SystemdServiceConfiguration</span></code>: <code class="docutils literal notranslate"><span class="pre">[Unit]</span></code>, <code class="docutils literal notranslate"><span class="pre">[Service]</span></code>, and <code class="docutils literal notranslate"><span class="pre">[Install]</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SystemdTimerConfiguration</span></code>: <code class="docutils literal notranslate"><span class="pre">[Unit]</span></code>, <code class="docutils literal notranslate"><span class="pre">[Timer]</span></code>, and <code class="docutils literal notranslate"><span class="pre">[Install]</span></code></p></li>
+<li><p>validation for required service commands, <code class="docutils literal notranslate"><span class="pre">Type=oneshot</span></code> command lists, <code class="docutils literal notranslate"><span class="pre">Type=dbus</span></code>, and timer triggers</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">to_unit_file()</span></code> and the ecosystem-compatible <code class="docutils literal notranslate"><span class="pre">to_cfg()</span></code> alias</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">systemd_pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">SystemdServiceConfiguration</span>
+
+<span class="n">service</span> <span class="o">=</span> <span class="n">SystemdServiceConfiguration</span><span class="p">(</span>
+    <span class="n">unit</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Long-running Airflow job&quot;</span><span class="p">},</span>
+    <span class="n">service</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;exec&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;exec_start&quot;</span><span class="p">:</span> <span class="s2">&quot;/opt/jobs/run&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;restart&quot;</span><span class="p">:</span> <span class="s2">&quot;on-failure&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;restart_sec&quot;</span><span class="p">:</span> <span class="s2">&quot;5s&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;environment&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;MODE&quot;</span><span class="p">:</span> <span class="s2">&quot;production&quot;</span><span class="p">},</span>
+    <span class="p">},</span>
+    <span class="n">install</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;wanted_by&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;multi-user.target&quot;</span><span class="p">]},</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">service</span><span class="o">.</span><span class="n">to_unit_file</span><span class="p">())</span>
+</pre></div>
+</div>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="k">[Unit]</span>
+<span class="na">Description</span><span class="o">=</span><span class="s">Long-running Airflow job</span>
+
+<span class="k">[Service]</span>
+<span class="na">Type</span><span class="o">=</span><span class="s">exec</span>
+<span class="na">ExecStart</span><span class="o">=</span><span class="s">/opt/jobs/run</span>
+<span class="na">Restart</span><span class="o">=</span><span class="s">on-failure</span>
+<span class="na">RestartSec</span><span class="o">=</span><span class="s">5s</span>
+<span class="na">Environment</span><span class="o">=</span><span class="s">&quot;MODE=production&quot;</span>
+
+<span class="k">[Install]</span>
+<span class="na">WantedBy</span><span class="o">=</span><span class="s">multi-user.target</span>
+</pre></div>
+</div>
+<p>Timer values accept systemd time strings or Python <code class="docutils literal notranslate"><span class="pre">timedelta</span></code> values. Repeated calendar and monotonic triggers render as repeated directives, preserving systemd semantics.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>This library was generated using <a class="reference external" href="https://copier.readthedocs.io/en/stable/">copier</a> from the <a class="reference external" href="https://github.com/python-project-templates/base">Base Python Project Template repository</a>.</p>
@@ -263,7 +302,7 @@
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="autoapi/index.html">
+          <a class="next-page" href="docs/src/api.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
