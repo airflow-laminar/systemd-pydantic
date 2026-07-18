@@ -57,7 +57,7 @@ class _Section(BaseModel):
         return str(value)
 
 
-class UnitSection(_Section):
+class UnitConfiguration(_Section):
     """Common settings from a systemd unit's ``[Unit]`` section."""
 
     section_name = "Unit"
@@ -91,7 +91,7 @@ class UnitSection(_Section):
     on_failure: list[str] = Field(default_factory=list)
 
 
-class ServiceSection(_Section):
+class ServiceConfiguration(_Section):
     """Process supervision settings from a systemd ``[Service]`` section."""
 
     section_name = "Service"
@@ -218,7 +218,7 @@ class ServiceSection(_Section):
         return value
 
     @model_validator(mode="after")
-    def _validate_commands(self) -> ServiceSection:
+    def _validate_commands(self) -> ServiceConfiguration:
         if not self.exec_start and not (self.remain_after_exit and self.exec_stop):
             raise ValueError("a service requires ExecStart, or RemainAfterExit=yes with ExecStop")
         if self.type != "oneshot" and len(self.exec_start) > 1:
@@ -228,7 +228,7 @@ class ServiceSection(_Section):
         return self
 
 
-class TimerSection(_Section):
+class TimerConfiguration(_Section):
     """Activation settings from a systemd ``[Timer]`` section."""
 
     section_name = "Timer"
@@ -298,7 +298,7 @@ class TimerSection(_Section):
         return value
 
     @model_validator(mode="after")
-    def _require_trigger(self) -> TimerSection:
+    def _require_trigger(self) -> TimerConfiguration:
         triggers = (
             self.on_active_sec,
             self.on_boot_sec,
@@ -314,7 +314,7 @@ class TimerSection(_Section):
         return self
 
 
-class InstallSection(_Section):
+class InstallConfiguration(_Section):
     """Enablement settings from a systemd ``[Install]`` section."""
 
     section_name = "Install"
@@ -351,17 +351,17 @@ class _SystemdConfiguration(BaseModel):
         return self.to_unit_file()
 
 
-class SystemdServiceConfiguration(_SystemdConfiguration):
+class ServiceUnitConfiguration(_SystemdConfiguration):
     section_order = ("unit", "service", "install")
 
-    unit: UnitSection | None = None
-    service: ServiceSection
-    install: InstallSection | None = None
+    unit: UnitConfiguration | None = None
+    service: ServiceConfiguration
+    install: InstallConfiguration | None = None
 
 
-class SystemdTimerConfiguration(_SystemdConfiguration):
+class TimerUnitConfiguration(_SystemdConfiguration):
     section_order = ("unit", "timer", "install")
 
-    unit: UnitSection | None = None
-    timer: TimerSection
-    install: InstallSection | None = None
+    unit: UnitConfiguration | None = None
+    timer: TimerConfiguration
+    install: InstallConfiguration | None = None

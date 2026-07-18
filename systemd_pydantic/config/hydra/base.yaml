@@ -1,0 +1,5 @@
+# @package _global_
+
+_target_: systemd_pydantic.SystemdConfiguration
+service: {}
+timer: {}

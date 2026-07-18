@@ -1,0 +1,8 @@
+# @package _global_
+
+service:
+  worker:
+    service:
+      type: exec
+      exec_start: /usr/bin/worker
+scope: user
