@@ -1,101 +1,49 @@
 # systemd-pydantic
 
-[Pydantic](https://docs.pydantic.dev/latest/) models for systemd service and timer units.
+Typed, YAML-friendly models and lifecycle tools for systemd services and timers.
 
 [![Build Status](https://github.com/airflow-laminar/systemd-pydantic/actions/workflows/build.yaml/badge.svg?branch=main&event=push)](https://github.com/airflow-laminar/systemd-pydantic/actions/workflows/build.yaml)
 [![codecov](https://codecov.io/gh/airflow-laminar/systemd-pydantic/branch/main/graph/badge.svg)](https://codecov.io/gh/airflow-laminar/systemd-pydantic)
 [![License](https://img.shields.io/github/license/airflow-laminar/systemd-pydantic)](https://github.com/airflow-laminar/systemd-pydantic)
 [![PyPI](https://img.shields.io/pypi/v/systemd-pydantic.svg)](https://pypi.python.org/pypi/systemd-pydantic)
 
-## Overview
-
-`systemd-pydantic` provides typed, YAML-friendly models, lifecycle clients, and convenience commands for systemd. Its layers mirror [`supervisor-pydantic`](https://github.com/airflow-laminar/supervisor-pydantic):
-
-- `ServiceConfiguration`: `[Service]` settings, analogous to `ProgramConfiguration`
-- `ServiceUnitConfiguration` and `TimerUnitConfiguration`: individual unit files
-- `SystemdConfiguration`: named service and timer collections, file persistence, Hydra loading, and basic lifecycle methods
-- `SystemdConvenienceConfiguration`: defaults and persisted JSON used by external tools such as Airflow
-- `SystemdClient`: typed `systemctl` operations and `UnitInfo` state
-- `_systemd_convenience`: lifecycle CLI for local or SSH-driven orchestration
-
-Timer support lives in this package because timers share systemd's common `[Unit]` and `[Install]` sections and normally activate a matching service unit.
-
-## Configuration
-
 ```python
-from systemd_pydantic import ServiceConfiguration, ServiceUnitConfiguration, SystemdConfiguration
+from systemd_pydantic import ServiceConfiguration, ServiceUnitConfiguration
 
-config = SystemdConfiguration(
-    service={
-        "long-running-job": ServiceUnitConfiguration(
-            unit={"description": "Long-running Airflow job"},
-            service=ServiceConfiguration(
-                type="exec",
-                exec_start="/opt/jobs/run",
-                restart="on-failure",
-                restart_sec="5s",
-                environment={"MODE": "production"},
-            ),
-        )
-    },
-    scope="user",
+unit = ServiceUnitConfiguration(
+    unit={"description": "Example worker"},
+    service=ServiceConfiguration(
+        type="exec",
+        exec_start="/opt/jobs/worker",
+        restart="on-failure",
+    ),
 )
 
-config.write()
+print(unit.to_unit_file())
 ```
 
-Dictionary input works identically, making the configuration suitable for YAML and Hydra:
+The package models unit-file sections, named service/timer collections,
+filesystem persistence, `systemctl` operations, and a convenience CLI used by
+external orchestrators.
 
-```yaml
-# @package _global_
+## Documentation
 
-service:
-  long-running-job:
-    unit:
-      description: Long-running Airflow job
-    service:
-      type: exec
-      exec_start: /opt/jobs/run
-      restart: on-failure
-      restart_sec: 5s
-      environment:
-        MODE: production
-scope: user
-```
+- [Tutorial: render a service and timer](docs/src/tutorial.md)
+- [How-to guides](docs/src/how-to.md)
+- [Why services and timers share one model](docs/src/explanation.md)
+- [API reference](docs/src/api.md)
 
-Timer values accept systemd time strings or Python `timedelta` values. Repeated calendar and monotonic triggers render as repeated directives, preserving systemd semantics.
+Published documentation is available at
+[airflow-laminar.github.io/systemd-pydantic](https://airflow-laminar.github.io/systemd-pydantic/).
 
-`scope="system"` writes to `/etc/systemd/system` and calls `systemctl`. `scope="user"` writes to `~/.config/systemd/user` and calls `systemctl --user`. The executing user must have permission to write the selected unit directory and control its systemd manager.
+## Ecosystem
 
-## Lifecycle client
-
-```python
-from systemd_pydantic import SystemdClient
-
-client = SystemdClient(config)
-client.daemon_reload()
-client.start_services()
-
-for unit in client.get_all_service_info().values():
-    print(unit.name, unit.active_state, unit.result)
-```
-
-`SystemdClient` also supports stopping, restarting, killing, enabling, and disabling units. A custom `CommandRunner` can be injected for tests or remote execution.
-
-## Convenience CLI
-
-`SystemdConvenienceConfiguration` persists its JSON representation alongside generated units. The `_systemd_convenience` CLI consumes that file and provides commands aligned with `supervisor-pydantic`:
-
-```text
-configure-systemd
-start-services
-check-services
-restart-services
-stop-services
-unconfigure-systemd
-```
-
-Systemd itself is already running, so there are intentionally no `start-systemd` or `stop-systemd` daemon commands.
+- [supervisor-pydantic](https://github.com/airflow-laminar/supervisor-pydantic) provides the analogous supervisord models.
+- [cron-pydantic](https://github.com/airflow-laminar/cron-pydantic) models traditional crontabs.
+- [airflow-systemd](https://github.com/airflow-laminar/airflow-systemd) orchestrates these services from Airflow.
+- [airflow-supervisor](https://github.com/airflow-laminar/airflow-supervisor) and [airflow-cron](https://github.com/airflow-laminar/airflow-cron) provide alternative Airflow integrations.
+- [airflow-pydantic](https://github.com/airflow-laminar/airflow-pydantic) supplies declarative Airflow models.
+- [airflow-config](https://github.com/airflow-laminar/airflow-config) loads YAML-based Airflow configurations.
 
 > [!NOTE]
 > This library was generated using [copier](https://copier.readthedocs.io/en/stable/) from the [Base Python Project Template repository](https://github.com/python-project-templates/base).
