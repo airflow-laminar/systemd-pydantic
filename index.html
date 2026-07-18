@@ -250,46 +250,86 @@
 <a class="reference external" href="https://pypi.python.org/pypi/systemd-pydantic"><img alt="PyPI" src="https://img.shields.io/pypi/v/systemd-pydantic.svg" /></a></p>
 <section id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">¶</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">systemd-pydantic</span></code> provides typed, YAML-friendly models for generating systemd unit files. Timer support lives in this package because timers share systemd’s common <code class="docutils literal notranslate"><span class="pre">[Unit]</span></code> and <code class="docutils literal notranslate"><span class="pre">[Install]</span></code> sections and normally activate a matching service unit.</p>
-<p>The initial model surface covers common process-supervision and scheduling settings:</p>
+<p><code class="docutils literal notranslate"><span class="pre">systemd-pydantic</span></code> provides typed, YAML-friendly models, lifecycle clients, and convenience commands for systemd. Its layers mirror <a class="reference external" href="https://github.com/airflow-laminar/supervisor-pydantic"><code class="docutils literal notranslate"><span class="pre">supervisor-pydantic</span></code></a>:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">SystemdServiceConfiguration</span></code>: <code class="docutils literal notranslate"><span class="pre">[Unit]</span></code>, <code class="docutils literal notranslate"><span class="pre">[Service]</span></code>, and <code class="docutils literal notranslate"><span class="pre">[Install]</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">SystemdTimerConfiguration</span></code>: <code class="docutils literal notranslate"><span class="pre">[Unit]</span></code>, <code class="docutils literal notranslate"><span class="pre">[Timer]</span></code>, and <code class="docutils literal notranslate"><span class="pre">[Install]</span></code></p></li>
-<li><p>validation for required service commands, <code class="docutils literal notranslate"><span class="pre">Type=oneshot</span></code> command lists, <code class="docutils literal notranslate"><span class="pre">Type=dbus</span></code>, and timer triggers</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">to_unit_file()</span></code> and the ecosystem-compatible <code class="docutils literal notranslate"><span class="pre">to_cfg()</span></code> alias</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ServiceConfiguration</span></code>: <code class="docutils literal notranslate"><span class="pre">[Service]</span></code> settings, analogous to <code class="docutils literal notranslate"><span class="pre">ProgramConfiguration</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ServiceUnitConfiguration</span></code> and <code class="docutils literal notranslate"><span class="pre">TimerUnitConfiguration</span></code>: individual unit files</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SystemdConfiguration</span></code>: named service and timer collections, file persistence, Hydra loading, and basic lifecycle methods</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SystemdConvenienceConfiguration</span></code>: defaults and persisted JSON used by external tools such as Airflow</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SystemdClient</span></code>: typed <code class="docutils literal notranslate"><span class="pre">systemctl</span></code> operations and <code class="docutils literal notranslate"><span class="pre">UnitInfo</span></code> state</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">_systemd_convenience</span></code>: lifecycle CLI for local or SSH-driven orchestration</p></li>
 </ul>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">systemd_pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">SystemdServiceConfiguration</span>
+<p>Timer support lives in this package because timers share systemd’s common <code class="docutils literal notranslate"><span class="pre">[Unit]</span></code> and <code class="docutils literal notranslate"><span class="pre">[Install]</span></code> sections and normally activate a matching service unit.</p>
+</section>
+<section id="configuration">
+<h2>Configuration<a class="headerlink" href="#configuration" title="Link to this heading">¶</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">systemd_pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">ServiceConfiguration</span><span class="p">,</span> <span class="n">ServiceUnitConfiguration</span><span class="p">,</span> <span class="n">SystemdConfiguration</span>
 
-<span class="n">service</span> <span class="o">=</span> <span class="n">SystemdServiceConfiguration</span><span class="p">(</span>
-    <span class="n">unit</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Long-running Airflow job&quot;</span><span class="p">},</span>
+<span class="n">config</span> <span class="o">=</span> <span class="n">SystemdConfiguration</span><span class="p">(</span>
     <span class="n">service</span><span class="o">=</span><span class="p">{</span>
-        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;exec&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;exec_start&quot;</span><span class="p">:</span> <span class="s2">&quot;/opt/jobs/run&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;restart&quot;</span><span class="p">:</span> <span class="s2">&quot;on-failure&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;restart_sec&quot;</span><span class="p">:</span> <span class="s2">&quot;5s&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;environment&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;MODE&quot;</span><span class="p">:</span> <span class="s2">&quot;production&quot;</span><span class="p">},</span>
+        <span class="s2">&quot;long-running-job&quot;</span><span class="p">:</span> <span class="n">ServiceUnitConfiguration</span><span class="p">(</span>
+            <span class="n">unit</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Long-running Airflow job&quot;</span><span class="p">},</span>
+            <span class="n">service</span><span class="o">=</span><span class="n">ServiceConfiguration</span><span class="p">(</span>
+                <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;exec&quot;</span><span class="p">,</span>
+                <span class="n">exec_start</span><span class="o">=</span><span class="s2">&quot;/opt/jobs/run&quot;</span><span class="p">,</span>
+                <span class="n">restart</span><span class="o">=</span><span class="s2">&quot;on-failure&quot;</span><span class="p">,</span>
+                <span class="n">restart_sec</span><span class="o">=</span><span class="s2">&quot;5s&quot;</span><span class="p">,</span>
+                <span class="n">environment</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;MODE&quot;</span><span class="p">:</span> <span class="s2">&quot;production&quot;</span><span class="p">},</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
     <span class="p">},</span>
-    <span class="n">install</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;wanted_by&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;multi-user.target&quot;</span><span class="p">]},</span>
+    <span class="n">scope</span><span class="o">=</span><span class="s2">&quot;user&quot;</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="n">service</span><span class="o">.</span><span class="n">to_unit_file</span><span class="p">())</span>
+<span class="n">config</span><span class="o">.</span><span class="n">write</span><span class="p">()</span>
 </pre></div>
 </div>
-<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="k">[Unit]</span>
-<span class="na">Description</span><span class="o">=</span><span class="s">Long-running Airflow job</span>
+<p>Dictionary input works identically, making the configuration suitable for YAML and Hydra:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># @package _global_</span>
 
-<span class="k">[Service]</span>
-<span class="na">Type</span><span class="o">=</span><span class="s">exec</span>
-<span class="na">ExecStart</span><span class="o">=</span><span class="s">/opt/jobs/run</span>
-<span class="na">Restart</span><span class="o">=</span><span class="s">on-failure</span>
-<span class="na">RestartSec</span><span class="o">=</span><span class="s">5s</span>
-<span class="na">Environment</span><span class="o">=</span><span class="s">&quot;MODE=production&quot;</span>
-
-<span class="k">[Install]</span>
-<span class="na">WantedBy</span><span class="o">=</span><span class="s">multi-user.target</span>
+<span class="nt">service</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">long-running-job</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">unit</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Long-running Airflow job</span>
+<span class="w">    </span><span class="nt">service</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">exec</span>
+<span class="w">      </span><span class="nt">exec_start</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/opt/jobs/run</span>
+<span class="w">      </span><span class="nt">restart</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">on-failure</span>
+<span class="w">      </span><span class="nt">restart_sec</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5s</span>
+<span class="w">      </span><span class="nt">environment</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">MODE</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">production</span>
+<span class="nt">scope</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">user</span>
 </pre></div>
 </div>
 <p>Timer values accept systemd time strings or Python <code class="docutils literal notranslate"><span class="pre">timedelta</span></code> values. Repeated calendar and monotonic triggers render as repeated directives, preserving systemd semantics.</p>
+<p><code class="docutils literal notranslate"><span class="pre">scope=&quot;system&quot;</span></code> writes to <code class="docutils literal notranslate"><span class="pre">/etc/systemd/system</span></code> and calls <code class="docutils literal notranslate"><span class="pre">systemctl</span></code>. <code class="docutils literal notranslate"><span class="pre">scope=&quot;user&quot;</span></code> writes to <code class="docutils literal notranslate"><span class="pre">~/.config/systemd/user</span></code> and calls <code class="docutils literal notranslate"><span class="pre">systemctl</span> <span class="pre">--user</span></code>. The executing user must have permission to write the selected unit directory and control its systemd manager.</p>
+</section>
+<section id="lifecycle-client">
+<h2>Lifecycle client<a class="headerlink" href="#lifecycle-client" title="Link to this heading">¶</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">systemd_pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">SystemdClient</span>
+
+<span class="n">client</span> <span class="o">=</span> <span class="n">SystemdClient</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+<span class="n">client</span><span class="o">.</span><span class="n">daemon_reload</span><span class="p">()</span>
+<span class="n">client</span><span class="o">.</span><span class="n">start_services</span><span class="p">()</span>
+
+<span class="k">for</span> <span class="n">unit</span> <span class="ow">in</span> <span class="n">client</span><span class="o">.</span><span class="n">get_all_service_info</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">unit</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">unit</span><span class="o">.</span><span class="n">active_state</span><span class="p">,</span> <span class="n">unit</span><span class="o">.</span><span class="n">result</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">SystemdClient</span></code> also supports stopping, restarting, killing, enabling, and disabling units. A custom <code class="docutils literal notranslate"><span class="pre">CommandRunner</span></code> can be injected for tests or remote execution.</p>
+</section>
+<section id="convenience-cli">
+<h2>Convenience CLI<a class="headerlink" href="#convenience-cli" title="Link to this heading">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">SystemdConvenienceConfiguration</span></code> persists its JSON representation alongside generated units. The <code class="docutils literal notranslate"><span class="pre">_systemd_convenience</span></code> CLI consumes that file and provides commands aligned with <code class="docutils literal notranslate"><span class="pre">supervisor-pydantic</span></code>:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>configure-systemd
+start-services
+check-services
+restart-services
+stop-services
+unconfigure-systemd
+</pre></div>
+</div>
+<p>Systemd itself is already running, so there are intentionally no <code class="docutils literal notranslate"><span class="pre">start-systemd</span></code> or <code class="docutils literal notranslate"><span class="pre">stop-systemd</span></code> daemon commands.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>This library was generated using <a class="reference external" href="https://copier.readthedocs.io/en/stable/">copier</a> from the <a class="reference external" href="https://github.com/python-project-templates/base">Base Python Project Template repository</a>.</p>
