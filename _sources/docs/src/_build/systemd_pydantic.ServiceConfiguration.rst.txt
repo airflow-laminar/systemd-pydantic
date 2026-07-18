@@ -1,0 +1,6 @@
+﻿systemd\_pydantic.ServiceConfiguration
+======================================
+
+.. currentmodule:: systemd_pydantic
+
+.. autopydantic_model:: ServiceConfiguration

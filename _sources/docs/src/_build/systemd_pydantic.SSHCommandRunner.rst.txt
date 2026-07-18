@@ -1,0 +1,23 @@
+﻿systemd\_pydantic.SSHCommandRunner
+==================================
+
+.. currentmodule:: systemd_pydantic
+
+.. autoclass:: SSHCommandRunner
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~SSHCommandRunner.__init__
+      ~SSHCommandRunner.run
+   
+   
+
+   
+   
+   

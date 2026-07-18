@@ -1,0 +1,788 @@
+# index.html.md
+
+# systemd-pydantic
+
+Typed, YAML-friendly models and lifecycle tools for systemd services and timers.
+
+[![Build Status](https://github.com/airflow-laminar/systemd-pydantic/actions/workflows/build.yaml/badge.svg?branch=main&event=push)](https://github.com/airflow-laminar/systemd-pydantic/actions/workflows/build.yaml)
+[![codecov](https://codecov.io/gh/airflow-laminar/systemd-pydantic/branch/main/graph/badge.svg)](https://codecov.io/gh/airflow-laminar/systemd-pydantic)
+[![License](https://img.shields.io/github/license/airflow-laminar/systemd-pydantic)](https://github.com/airflow-laminar/systemd-pydantic)
+[![PyPI](https://img.shields.io/pypi/v/systemd-pydantic.svg)](https://pypi.python.org/pypi/systemd-pydantic)
+
+```python
+from systemd_pydantic import ServiceConfiguration, ServiceUnitConfiguration
+
+unit = ServiceUnitConfiguration(
+    unit={"description": "Example worker"},
+    service=ServiceConfiguration(
+        type="exec",
+        exec_start="/opt/jobs/worker",
+        restart="on-failure",
+    ),
+)
+
+print(unit.to_unit_file())
+```
+
+The package models unit-file sections, named service/timer collections,
+filesystem persistence, `systemctl` operations, and a convenience CLI used by
+external orchestrators.
+
+## Documentation
+
+- [Tutorial: render a service and timer](docs/src/tutorial.md)
+- [How-to guides](docs/src/how-to.md)
+- [Why services and timers share one model](docs/src/explanation.md)
+- [API reference](docs/src/api.md)
+
+Published documentation is available at
+[airflow-laminar.github.io/systemd-pydantic](https://airflow-laminar.github.io/systemd-pydantic/).
+
+## Ecosystem
+
+- [supervisor-pydantic](https://github.com/airflow-laminar/supervisor-pydantic) provides the analogous supervisord models.
+- [cron-pydantic](https://github.com/airflow-laminar/cron-pydantic) models traditional crontabs.
+- [airflow-systemd](https://github.com/airflow-laminar/airflow-systemd) orchestrates these services from Airflow.
+- [airflow-supervisor](https://github.com/airflow-laminar/airflow-supervisor) and [airflow-cron](https://github.com/airflow-laminar/airflow-cron) provide alternative Airflow integrations.
+- [airflow-pydantic](https://github.com/airflow-laminar/airflow-pydantic) supplies declarative Airflow models.
+- [airflow-config](https://github.com/airflow-laminar/airflow-config) loads YAML-based Airflow configurations.
+
+#### NOTE
+This library was generated using [copier](https://copier.readthedocs.io/en/stable/) from the [Base Python Project Template repository](https://github.com/python-project-templates/base).
+
+
+# api.html.md
+
+# API reference
+
+The public API is re-exported from `systemd_pydantic`.
+
+## Unit models
+
+| [`UnitConfiguration`](_build/systemd_pydantic.UnitConfiguration.md#systemd_pydantic.UnitConfiguration)                      | Common settings from a systemd unit's `[Unit]` section.          |
+|-----------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------|
+| [`ServiceConfiguration`](_build/systemd_pydantic.ServiceConfiguration.md#systemd_pydantic.ServiceConfiguration)             | Process supervision settings from a systemd `[Service]` section. |
+| [`TimerConfiguration`](_build/systemd_pydantic.TimerConfiguration.md#systemd_pydantic.TimerConfiguration)                   | Activation settings from a systemd `[Timer]` section.            |
+| [`InstallConfiguration`](_build/systemd_pydantic.InstallConfiguration.md#systemd_pydantic.InstallConfiguration)             | Enablement settings from a systemd `[Install]` section.          |
+| [`ServiceUnitConfiguration`](_build/systemd_pydantic.ServiceUnitConfiguration.md#systemd_pydantic.ServiceUnitConfiguration) |                                                                  |
+| [`TimerUnitConfiguration`](_build/systemd_pydantic.TimerUnitConfiguration.md#systemd_pydantic.TimerUnitConfiguration)       |                                                                  |
+
+## Configuration and lifecycle
+
+| [`SystemdConfiguration`](_build/systemd_pydantic.SystemdConfiguration.md#systemd_pydantic.SystemdConfiguration)                                  | Named collection of systemd service and timer unit files.          |
+|--------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------|
+| [`SystemdConvenienceConfiguration`](_build/systemd_pydantic.SystemdConvenienceConfiguration.md#systemd_pydantic.SystemdConvenienceConfiguration) | Systemd defaults and persisted state used by convenience commands. |
+| [`SystemdClient`](_build/systemd_pydantic.SystemdClient.md#systemd_pydantic.SystemdClient)(cfg[, runner])                                        |                                                                    |
+| [`UnitInfo`](_build/systemd_pydantic.UnitInfo.md#systemd_pydantic.UnitInfo)                                                                      |                                                                    |
+| [`CommandResult`](_build/systemd_pydantic.CommandResult.md#systemd_pydantic.CommandResult)(command, returncode[, stdout, ...])                   |                                                                    |
+| [`CommandRunner`](_build/systemd_pydantic.CommandRunner.md#systemd_pydantic.CommandRunner)(\*args, \*\*kwargs)                                   |                                                                    |
+| [`SubprocessCommandRunner`](_build/systemd_pydantic.SubprocessCommandRunner.md#systemd_pydantic.SubprocessCommandRunner)()                       |                                                                    |
+| [`SSHCommandRunner`](_build/systemd_pydantic.SSHCommandRunner.md#systemd_pydantic.SSHCommandRunner)(host[, runner])                              |                                                                    |
+| [`SystemdCommandError`](_build/systemd_pydantic.SystemdCommandError.md#systemd_pydantic.SystemdCommandError)(result)                             |                                                                    |
+| [`load_config`](_build/systemd_pydantic.load_config.md#systemd_pydantic.load_config)([config_dir, config_name, ...])                             |                                                                    |
+| [`load_convenience_config`](_build/systemd_pydantic.load_convenience_config.md#systemd_pydantic.load_convenience_config)([config_dir, ...])      |                                                                    |
+
+
+# explanation.html.md
+
+# Why services and timers share one model
+
+A systemd timer does not run a command by itself. It activates another unit,
+normally a service with the same base name. Both files use the common `[Unit]`
+and `[Install]` sections, live under the same manager scope, and participate in
+the same enable/start/status lifecycle. Keeping timers in `systemd-pydantic`
+preserves that relationship and avoids a second package duplicating systemd’s
+unit concepts.
+
+## Layers of the package
+
+Section models map typed Python fields to systemd directives.
+`ServiceUnitConfiguration` and `TimerUnitConfiguration` assemble those sections
+into files. `SystemdConfiguration` names collections and controls persistence.
+`SystemdClient` handles `systemctl` calls and returns typed `UnitInfo` state.
+
+`SystemdConvenienceConfiguration` adds shared stop/restart defaults and persists
+JSON state for the `_systemd_convenience` CLI. That layer exists for external
+orchestrators such as
+[airflow-systemd](https://github.com/airflow-laminar/airflow-systemd); ordinary
+unit rendering does not require it.
+
+## User and system scopes
+
+System scope uses `/etc/systemd/system` and `systemctl`. User scope uses
+`~/.config/systemd/user` and `systemctl --user`. The model changes paths and
+commands, but it does not elevate permissions or create a user session manager.
+Those remain deployment responsibilities.
+
+## Relationship to cron and supervisord
+
+[cron-pydantic](https://github.com/airflow-laminar/cron-pydantic) models a
+scheduler that launches commands without retaining process ownership.
+[supervisor-pydantic](https://github.com/airflow-laminar/supervisor-pydantic)
+models a dedicated supervisord instance. Systemd combines activation,
+supervision, logging, dependencies, and host lifecycle in the existing service
+manager, which is why its configuration and runtime client are represented
+together.
+
+
+# how-to.html.md
+
+# How-to guides
+
+These guides cover common systemd configuration and lifecycle tasks.
+
+## How to load YAML with Hydra
+
+Create `config/job.yaml`:
+
+```yaml
+# @package _global_
+service:
+  worker:
+    unit:
+      description: Background worker
+    service:
+      type: exec
+      exec_start: /opt/jobs/worker
+      restart: on-failure
+scope: user
+```
+
+Load it relative to your calling script:
+
+```python
+from systemd_pydantic import SystemdConfiguration
+
+config = SystemdConfiguration.load("config", "job")
+```
+
+Pass Hydra overrides with `overrides=["scope=system"]` when the deployment owns
+the system manager.
+
+## How to control units
+
+Write units, reload the manager, then start services through one client:
+
+```python
+from systemd_pydantic import SystemdClient
+
+config.write()
+client = SystemdClient(config)
+client.daemon_reload()
+client.start_services()
+```
+
+Use `start_timers()` for timer activation. `enable_units()` and
+`disable_units()` default to every configured service and timer, or accept an
+explicit list of names.
+
+## How to run commands over SSH
+
+Inject an `SSHCommandRunner`:
+
+```python
+from systemd_pydantic import SSHCommandRunner, SystemdClient
+
+client = SystemdClient(config, runner=SSHCommandRunner("jobs.example.com"))
+client.get_all_service_info()
+```
+
+The remote host must already contain the unit files. For Airflow-managed SSH
+configuration and lifecycle, use
+[airflow-systemd](https://github.com/airflow-laminar/airflow-systemd).
+
+## How to use the model with airflow-config
+
+Use `SystemdTask` as an `airflow-pydantic` task target:
+
+```yaml
+dags:
+  nightly-systemd:
+    schedule: "@daily"
+    tasks:
+      run-job:
+        _target_: airflow_systemd.SystemdTask
+        cfg:
+          scope: user
+          service:
+            nightly:
+              service:
+                type: exec
+                exec_start: /opt/jobs/nightly
+```
+
+Load this with `airflow-config`; it instantiates the matching
+`SystemdAirflowConfiguration` through the task model. Refer to the
+[airflow-systemd tutorial](https://github.com/airflow-laminar/airflow-systemd/blob/main/docs/src/tutorial.md)
+for the complete DAG lifecycle.
+
+
+# systemd_pydantic.CommandResult.html.md
+
+# systemd_pydantic.CommandResult
+
+### *class* systemd_pydantic.CommandResult(command: 'list[str]', returncode: 'int', stdout: 'str' = '', stderr: 'str' = '')
+
+Bases: `object`
+
+#### \_\_init_\_(command: list[str], returncode: int, stdout: str = '', stderr: str = '') → None
+
+### Methods
+
+| [`__init__`](#systemd_pydantic.CommandResult.__init__)(command, returncode[, stdout, stderr])   |    |
+|-------------------------------------------------------------------------------------------------|----|
+
+### Attributes
+
+| `stderr`     |    |
+|--------------|----|
+| `stdout`     |    |
+| `command`    |    |
+| `returncode` |    |
+
+
+# systemd_pydantic.CommandRunner.html.md
+
+# systemd_pydantic.CommandRunner
+
+### *class* systemd_pydantic.CommandRunner(\*args, \*\*kwargs)
+
+Bases: `Protocol`
+
+#### \_\_init_\_(\*args, \*\*kwargs)
+
+### Methods
+
+| [`__init__`](#systemd_pydantic.CommandRunner.__init__)(\*args, \*\*kwargs)   |    |
+|------------------------------------------------------------------------------|----|
+| `run`(command, timeout)                                                      |    |
+
+
+# systemd_pydantic.InstallConfiguration.html.md
+
+# systemd_pydantic.InstallConfiguration
+
+### *pydantic model* systemd_pydantic.InstallConfiguration
+
+Bases: `_Section`
+
+Enablement settings from a systemd `[Install]` section.
+
+#### section_name *: ClassVar[str]* *= 'Install'*
+
+#### directives *: ClassVar[dict[str, str]]* *= {'alias': 'Alias', 'also': 'Also', 'default_instance': 'DefaultInstance', 'required_by': 'RequiredBy', 'upheld_by': 'UpheldBy', 'wanted_by': 'WantedBy'}*
+
+#### space_separated *: ClassVar[frozenset[str]]* *= frozenset({'alias', 'also', 'required_by', 'upheld_by', 'wanted_by'})*
+
+#### *field* alias *: list[str]* *[Optional]*
+
+#### *field* wanted_by *: list[str]* *[Optional]*
+
+#### *field* required_by *: list[str]* *[Optional]*
+
+#### *field* upheld_by *: list[str]* *[Optional]*
+
+#### *field* also *: list[str]* *[Optional]*
+
+#### *field* default_instance *: str | None* *= None*
+
+
+# systemd_pydantic.SSHCommandRunner.html.md
+
+# systemd_pydantic.SSHCommandRunner
+
+### *class* systemd_pydantic.SSHCommandRunner(host: str, runner: [CommandRunner](systemd_pydantic.CommandRunner.md#systemd_pydantic.CommandRunner) | None = None)
+
+Bases: `object`
+
+#### \_\_init_\_(host: str, runner: [CommandRunner](systemd_pydantic.CommandRunner.md#systemd_pydantic.CommandRunner) | None = None)
+
+### Methods
+
+| [`__init__`](#systemd_pydantic.SSHCommandRunner.__init__)(host[, runner])   |    |
+|-----------------------------------------------------------------------------|----|
+| `run`(command, timeout)                                                     |    |
+
+
+# systemd_pydantic.ServiceConfiguration.html.md
+
+# systemd_pydantic.ServiceConfiguration
+
+### *pydantic model* systemd_pydantic.ServiceConfiguration
+
+Bases: `_Section`
+
+Process supervision settings from a systemd `[Service]` section.
+
+#### section_name *: ClassVar[str]* *= 'Service'*
+
+#### directives *: ClassVar[dict[str, str]]* *= {'bus_name': 'BusName', 'environment': 'Environment', 'environment_file': 'EnvironmentFile', 'exec_condition': 'ExecCondition', 'exec_reload': 'ExecReload', 'exec_start': 'ExecStart', 'exec_start_post': 'ExecStartPost', 'exec_start_pre': 'ExecStartPre', 'exec_stop': 'ExecStop', 'exec_stop_post': 'ExecStopPost', 'group': 'Group', 'guess_main_pid': 'GuessMainPID', 'kill_mode': 'KillMode', 'kill_signal': 'KillSignal', 'pid_file': 'PIDFile', 'remain_after_exit': 'RemainAfterExit', 'restart': 'Restart', 'restart_force_exit_status': 'RestartForceExitStatus', 'restart_max_delay_sec': 'RestartMaxDelaySec', 'restart_prevent_exit_status': 'RestartPreventExitStatus', 'restart_randomized_delay_sec': 'RestartRandomizedDelaySec', 'restart_sec': 'RestartSec', 'restart_steps': 'RestartSteps', 'runtime_max_sec': 'RuntimeMaxSec', 'send_sigkill': 'SendSIGKILL', 'standard_error': 'StandardError', 'standard_output': 'StandardOutput', 'success_exit_status': 'SuccessExitStatus', 'supplementary_groups': 'SupplementaryGroups', 'timeout_start_sec': 'TimeoutStartSec', 'timeout_stop_sec': 'TimeoutStopSec', 'type': 'Type', 'umask': 'UMask', 'user': 'User', 'watchdog_sec': 'WatchdogSec', 'working_directory': 'WorkingDirectory'}*
+
+#### repeated *: ClassVar[frozenset[str]]* *= frozenset({'environment_file', 'exec_condition', 'exec_reload', 'exec_start', 'exec_start_post', 'exec_start_pre', 'exec_stop', 'exec_stop_post'})*
+
+#### space_separated *: ClassVar[frozenset[str]]* *= frozenset({'restart_force_exit_status', 'restart_prevent_exit_status', 'success_exit_status', 'supplementary_groups'})*
+
+#### *field* type *: ServiceType | None* *= None*
+
+#### *field* exec_condition *: list[str]* *[Optional]*
+
+#### *field* exec_start_pre *: list[str]* *[Optional]*
+
+#### *field* exec_start *: list[str]* *[Optional]*
+
+#### *field* exec_start_post *: list[str]* *[Optional]*
+
+#### *field* exec_reload *: list[str]* *[Optional]*
+
+#### *field* exec_stop *: list[str]* *[Optional]*
+
+#### *field* exec_stop_post *: list[str]* *[Optional]*
+
+#### *field* restart *: RestartPolicy | None* *= None*
+
+#### *field* restart_sec *: TimeSpan | None* *= None*
+
+#### *field* restart_steps *: int | None* *= None*
+
+#### *field* restart_max_delay_sec *: TimeSpan | None* *= None*
+
+#### *field* restart_randomized_delay_sec *: TimeSpan | None* *= None*
+
+#### *field* timeout_start_sec *: TimeSpan | Literal['infinity'] | None* *= None*
+
+#### *field* timeout_stop_sec *: TimeSpan | Literal['infinity'] | None* *= None*
+
+#### *field* runtime_max_sec *: TimeSpan | Literal['infinity'] | None* *= None*
+
+#### *field* watchdog_sec *: TimeSpan | None* *= None*
+
+#### *field* remain_after_exit *: bool | None* *= None*
+
+#### *field* guess_main_pid *: bool | None* *= None*
+
+#### *field* pid_file *: Path | None* *= None*
+
+#### *field* bus_name *: str | None* *= None*
+
+#### *field* user *: str | None* *= None*
+
+#### *field* group *: str | None* *= None*
+
+#### *field* supplementary_groups *: list[str]* *[Optional]*
+
+#### *field* working_directory *: Path | str | None* *= None*
+
+#### *field* environment *: dict[str, str]* *[Optional]*
+
+#### *field* environment_file *: list[Path | str]* *[Optional]*
+
+#### *field* umask *: str | None* *= None*
+
+#### *field* standard_output *: str | None* *= None*
+
+#### *field* standard_error *: str | None* *= None*
+
+#### *field* kill_mode *: KillMode | None* *= None*
+
+#### *field* kill_signal *: str | None* *= None*
+
+#### *field* send_sigkill *: bool | None* *= None*
+
+#### *field* success_exit_status *: list[int | str]* *[Optional]*
+
+#### *field* restart_prevent_exit_status *: list[int | str]* *[Optional]*
+
+#### *field* restart_force_exit_status *: list[int | str]* *[Optional]*
+
+
+# systemd_pydantic.ServiceUnitConfiguration.html.md
+
+# systemd_pydantic.ServiceUnitConfiguration
+
+### *pydantic model* systemd_pydantic.ServiceUnitConfiguration
+
+Bases: `_SystemdConfiguration`
+
+#### section_order *: ClassVar[tuple[str, ...]]* *= ('unit', 'service', 'install')*
+
+#### *field* unit *: [UnitConfiguration](systemd_pydantic.UnitConfiguration.md#systemd_pydantic.UnitConfiguration) | None* *= None*
+
+#### *field* service *: [ServiceConfiguration](systemd_pydantic.ServiceConfiguration.md#systemd_pydantic.ServiceConfiguration)* *[Required]*
+
+#### *field* install *: [InstallConfiguration](systemd_pydantic.InstallConfiguration.md#systemd_pydantic.InstallConfiguration) | None* *= None*
+
+
+# systemd_pydantic.SubprocessCommandRunner.html.md
+
+# systemd_pydantic.SubprocessCommandRunner
+
+### *class* systemd_pydantic.SubprocessCommandRunner
+
+Bases: `object`
+
+#### \_\_init_\_()
+
+### Methods
+
+| [`__init__`](#systemd_pydantic.SubprocessCommandRunner.__init__)()   |    |
+|----------------------------------------------------------------------|----|
+| `run`(command, timeout)                                              |    |
+
+
+# systemd_pydantic.SystemdClient.html.md
+
+# systemd_pydantic.SystemdClient
+
+### *class* systemd_pydantic.SystemdClient(cfg: [SystemdConfiguration](systemd_pydantic.SystemdConfiguration.md#systemd_pydantic.SystemdConfiguration), runner: [CommandRunner](systemd_pydantic.CommandRunner.md#systemd_pydantic.CommandRunner) | None = None)
+
+Bases: `object`
+
+#### \_\_init_\_(cfg: [SystemdConfiguration](systemd_pydantic.SystemdConfiguration.md#systemd_pydantic.SystemdConfiguration), runner: [CommandRunner](systemd_pydantic.CommandRunner.md#systemd_pydantic.CommandRunner) | None = None)
+
+### Methods
+
+| [`__init__`](#systemd_pydantic.SystemdClient.__init__)(cfg[, runner])   |    |
+|-------------------------------------------------------------------------|----|
+| `daemon_reload`()                                                       |    |
+| `disable_units`([names])                                                |    |
+| `enable_units`([names])                                                 |    |
+| `get_all_service_info`()                                                |    |
+| `get_all_timer_info`()                                                  |    |
+| `get_unit_info`(name)                                                   |    |
+| `get_units_info`(names)                                                 |    |
+| `kill_services`()                                                       |    |
+| `kill_units`(names)                                                     |    |
+| `restart_services`()                                                    |    |
+| `restart_units`(names)                                                  |    |
+| `start_services`()                                                      |    |
+| `start_timers`()                                                        |    |
+| `start_units`(names)                                                    |    |
+| `stop_services`()                                                       |    |
+| `stop_timers`()                                                         |    |
+| `stop_units`(names)                                                     |    |
+
+
+# systemd_pydantic.SystemdCommandError.html.md
+
+# systemd_pydantic.SystemdCommandError
+
+### *exception* systemd_pydantic.SystemdCommandError(result: [CommandResult](systemd_pydantic.CommandResult.md#systemd_pydantic.CommandResult))
+
+Bases: `RuntimeError`
+
+
+# systemd_pydantic.SystemdConfiguration.html.md
+
+# systemd_pydantic.SystemdConfiguration
+
+### *pydantic model* systemd_pydantic.SystemdConfiguration
+
+Bases: `BaseModel`
+
+Named collection of systemd service and timer unit files.
+
+#### *field* service *: dict[str, [ServiceUnitConfiguration](systemd_pydantic.ServiceUnitConfiguration.md#systemd_pydantic.ServiceUnitConfiguration)]* *[Required]*
+
+#### *field* timer *: dict[str, [TimerUnitConfiguration](systemd_pydantic.TimerUnitConfiguration.md#systemd_pydantic.TimerUnitConfiguration)]* *[Optional]*
+
+#### *field* unit_dir *: Path | None* *= None*
+
+#### *field* working_dir *: Path | None* *= None*
+
+#### *field* scope *: SystemdScope* *= 'system'*
+
+#### to_cfg() → dict[str, str]
+
+#### *property* service_names *: list[str]*
+
+#### *property* timer_names *: list[str]*
+
+#### *property* unit_paths *: list[Path]*
+
+#### write() → list[Path]
+
+#### rmdir() → None
+
+#### *classmethod* load(config_dir: str = 'config', config_name: str = '', overrides: list[str] | None = None, , basepath: str = '', \_offset: int = 3) → Self
+
+#### start() → dict[str, [UnitInfo](systemd_pydantic.UnitInfo.md#systemd_pydantic.UnitInfo)]
+
+#### running() → bool
+
+#### stop() → dict[str, [UnitInfo](systemd_pydantic.UnitInfo.md#systemd_pydantic.UnitInfo)]
+
+#### kill() → dict[str, [UnitInfo](systemd_pydantic.UnitInfo.md#systemd_pydantic.UnitInfo)]
+
+
+# systemd_pydantic.SystemdConvenienceConfiguration.html.md
+
+# systemd_pydantic.SystemdConvenienceConfiguration
+
+### *pydantic model* systemd_pydantic.SystemdConvenienceConfiguration
+
+Bases: [`SystemdConfiguration`](systemd_pydantic.SystemdConfiguration.md#systemd_pydantic.SystemdConfiguration)
+
+Systemd defaults and persisted state used by convenience commands.
+
+#### *field* restart *: Literal['no', 'on-success', 'on-failure', 'on-abnormal', 'on-watchdog', 'on-abort', 'always']* *= 'no'*
+
+#### *field* timeout_stop_sec *: str | timedelta* *= '30s'*
+
+#### *field* kill_mode *: Literal['control-group', 'mixed', 'process', 'none']* *= 'control-group'*
+
+#### *field* kill_signal *: str* *= 'SIGTERM'*
+
+#### *field* success_exit_status *: list[int | str]* *= [0]*
+
+#### *field* command_timeout *: int* *= 60*
+
+#### rmdir() → None
+
+
+# systemd_pydantic.TimerConfiguration.html.md
+
+# systemd_pydantic.TimerConfiguration
+
+### *pydantic model* systemd_pydantic.TimerConfiguration
+
+Bases: `_Section`
+
+Activation settings from a systemd `[Timer]` section.
+
+#### section_name *: ClassVar[str]* *= 'Timer'*
+
+#### directives *: ClassVar[dict[str, str]]* *= {'accuracy_sec': 'AccuracySec', 'defer_reactivation': 'DeferReactivation', 'fixed_random_delay': 'FixedRandomDelay', 'on_active_sec': 'OnActiveSec', 'on_boot_sec': 'OnBootSec', 'on_calendar': 'OnCalendar', 'on_clock_change': 'OnClockChange', 'on_startup_sec': 'OnStartupSec', 'on_timezone_change': 'OnTimezoneChange', 'on_unit_active_sec': 'OnUnitActiveSec', 'on_unit_inactive_sec': 'OnUnitInactiveSec', 'persistent': 'Persistent', 'randomized_delay_sec': 'RandomizedDelaySec', 'randomized_offset_sec': 'RandomizedOffsetSec', 'remain_after_elapse': 'RemainAfterElapse', 'unit': 'Unit', 'wake_system': 'WakeSystem'}*
+
+#### repeated *: ClassVar[frozenset[str]]* *= frozenset({'on_active_sec', 'on_boot_sec', 'on_calendar', 'on_startup_sec', 'on_unit_active_sec', 'on_unit_inactive_sec'})*
+
+#### *field* on_active_sec *: list[TimeSpan]* *[Optional]*
+
+#### *field* on_boot_sec *: list[TimeSpan]* *[Optional]*
+
+#### *field* on_startup_sec *: list[TimeSpan]* *[Optional]*
+
+#### *field* on_unit_active_sec *: list[TimeSpan]* *[Optional]*
+
+#### *field* on_unit_inactive_sec *: list[TimeSpan]* *[Optional]*
+
+#### *field* on_calendar *: list[str]* *[Optional]*
+
+#### *field* accuracy_sec *: TimeSpan | None* *= None*
+
+#### *field* randomized_delay_sec *: TimeSpan | None* *= None*
+
+#### *field* fixed_random_delay *: bool | None* *= None*
+
+#### *field* randomized_offset_sec *: TimeSpan | None* *= None*
+
+#### *field* defer_reactivation *: bool | None* *= None*
+
+#### *field* on_clock_change *: bool | None* *= None*
+
+#### *field* on_timezone_change *: bool | None* *= None*
+
+#### *field* unit *: str | None* *= None*
+
+#### *field* persistent *: bool | None* *= None*
+
+#### *field* wake_system *: bool | None* *= None*
+
+#### *field* remain_after_elapse *: bool | None* *= None*
+
+
+# systemd_pydantic.TimerUnitConfiguration.html.md
+
+# systemd_pydantic.TimerUnitConfiguration
+
+### *pydantic model* systemd_pydantic.TimerUnitConfiguration
+
+Bases: `_SystemdConfiguration`
+
+#### section_order *: ClassVar[tuple[str, ...]]* *= ('unit', 'timer', 'install')*
+
+#### *field* unit *: [UnitConfiguration](systemd_pydantic.UnitConfiguration.md#systemd_pydantic.UnitConfiguration) | None* *= None*
+
+#### *field* timer *: [TimerConfiguration](systemd_pydantic.TimerConfiguration.md#systemd_pydantic.TimerConfiguration)* *[Required]*
+
+#### *field* install *: [InstallConfiguration](systemd_pydantic.InstallConfiguration.md#systemd_pydantic.InstallConfiguration) | None* *= None*
+
+
+# systemd_pydantic.UnitConfiguration.html.md
+
+# systemd_pydantic.UnitConfiguration
+
+### *pydantic model* systemd_pydantic.UnitConfiguration
+
+Bases: `_Section`
+
+Common settings from a systemd unit’s `[Unit]` section.
+
+#### section_name *: ClassVar[str]* *= 'Unit'*
+
+#### directives *: ClassVar[dict[str, str]]* *= {'after': 'After', 'before': 'Before', 'binds_to': 'BindsTo', 'conflicts': 'Conflicts', 'description': 'Description', 'documentation': 'Documentation', 'on_failure': 'OnFailure', 'part_of': 'PartOf', 'requires': 'Requires', 'requisite': 'Requisite', 'upholds': 'Upholds', 'wants': 'Wants'}*
+
+#### space_separated *: ClassVar[frozenset[str]]* *= frozenset({'after', 'before', 'binds_to', 'conflicts', 'documentation', 'on_failure', 'part_of', 'requires', 'requisite', 'upholds', 'wants'})*
+
+#### *field* description *: str | None* *= None*
+
+#### *field* documentation *: list[str]* *[Optional]*
+
+#### *field* wants *: list[str]* *[Optional]*
+
+#### *field* requires *: list[str]* *[Optional]*
+
+#### *field* requisite *: list[str]* *[Optional]*
+
+#### *field* binds_to *: list[str]* *[Optional]*
+
+#### *field* part_of *: list[str]* *[Optional]*
+
+#### *field* upholds *: list[str]* *[Optional]*
+
+#### *field* conflicts *: list[str]* *[Optional]*
+
+#### *field* before *: list[str]* *[Optional]*
+
+#### *field* after *: list[str]* *[Optional]*
+
+#### *field* on_failure *: list[str]* *[Optional]*
+
+
+# systemd_pydantic.UnitInfo.html.md
+
+# systemd_pydantic.UnitInfo
+
+### *pydantic model* systemd_pydantic.UnitInfo
+
+Bases: `BaseModel`
+
+#### *field* name *: str* *[Required]*
+
+#### *field* load_state *: str* *= ''*
+
+#### *field* active_state *: str* *= ''*
+
+#### *field* sub_state *: str* *= ''*
+
+#### *field* result *: str* *= ''*
+
+#### *field* exec_main_code *: str* *= ''*
+
+#### *field* exec_main_status *: int | None* *= None*
+
+#### running() → bool
+
+#### stopped() → bool
+
+#### done(ok_exitstatuses: list[int | str] | None = None) → bool
+
+#### ok(ok_exitstatuses: list[int | str] | None = None) → bool
+
+#### bad(ok_exitstatuses: list[int | str] | None = None) → bool
+
+
+# systemd_pydantic.load_config.html.md
+
+# systemd_pydantic.load_config
+
+### systemd_pydantic.load_config(config_dir: str = 'config', config_name: str = '', overrides: list[str] | None = None, , basepath: str = '', \_offset: int = 3) → Self
+
+
+# systemd_pydantic.load_convenience_config.html.md
+
+# systemd_pydantic.load_convenience_config
+
+### systemd_pydantic.load_convenience_config(config_dir: str = 'config', config_name: str = '', overrides: list[str] | None = None, , basepath: str = '', \_offset: int = 3) → Self
+
+
+# tutorial.html.md
+
+# Tutorial: render a service and timer
+
+In this tutorial, we will model a oneshot service, schedule it with a timer, and
+write both unit files to a local build directory.
+
+## Install the package
+
+```bash
+pip install systemd-pydantic
+```
+
+## Create the units
+
+Create `example.py`:
+
+```python
+from systemd_pydantic import (
+    InstallConfiguration,
+    ServiceConfiguration,
+    ServiceUnitConfiguration,
+    SystemdConfiguration,
+    TimerConfiguration,
+    TimerUnitConfiguration,
+)
+
+config = SystemdConfiguration(
+    service={
+        "daily-report": ServiceUnitConfiguration(
+            unit={"description": "Build the daily report"},
+            service=ServiceConfiguration(
+                type="oneshot",
+                exec_start="/opt/reports/build",
+                environment={"REPORT_FORMAT": "html"},
+            ),
+        )
+    },
+    timer={
+        "daily-report": TimerUnitConfiguration(
+            unit={"description": "Run the daily report"},
+            timer=TimerConfiguration(
+                on_calendar="daily",
+                persistent=True,
+            ),
+            install=InstallConfiguration(wanted_by=["timers.target"]),
+        )
+    },
+    unit_dir="build/units",
+    working_dir="build/state",
+    scope="user",
+)
+
+for path in config.write():
+    print(path)
+```
+
+Run it:
+
+```bash
+python example.py
+```
+
+The output lists two files:
+
+```text
+build/units/daily-report.service
+build/units/daily-report.timer
+```
+
+## Inspect the files
+
+Open `build/units/daily-report.service`. It contains:
+
+```ini
+[Unit]
+Description=Build the daily report
+
+[Service]
+Type=oneshot
+ExecStart=/opt/reports/build
+Environment="REPORT_FORMAT=html"
+```
+
+Open `build/units/daily-report.timer`. It contains the calendar trigger and
+`timers.target` installation metadata.
+
+You have now rendered a related service/timer pair without writing to a systemd
+unit directory or invoking `systemctl`.
+
+

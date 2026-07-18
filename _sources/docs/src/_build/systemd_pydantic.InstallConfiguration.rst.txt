@@ -1,0 +1,6 @@
+﻿systemd\_pydantic.InstallConfiguration
+======================================
+
+.. currentmodule:: systemd_pydantic
+
+.. autopydantic_model:: InstallConfiguration

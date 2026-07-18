@@ -1,0 +1,23 @@
+﻿systemd\_pydantic.SubprocessCommandRunner
+=========================================
+
+.. currentmodule:: systemd_pydantic
+
+.. autoclass:: SubprocessCommandRunner
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~SubprocessCommandRunner.__init__
+      ~SubprocessCommandRunner.run
+   
+   
+
+   
+   
+   

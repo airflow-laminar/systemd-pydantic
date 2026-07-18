@@ -1,0 +1,6 @@
+﻿systemd\_pydantic.SystemdConfiguration
+======================================
+
+.. currentmodule:: systemd_pydantic
+
+.. autopydantic_model:: SystemdConfiguration

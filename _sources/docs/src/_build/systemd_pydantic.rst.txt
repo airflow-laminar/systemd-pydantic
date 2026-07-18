@@ -1,6 +1,0 @@
-﻿systemd\_pydantic
-=================
-
-.. automodule:: systemd_pydantic
-
-   

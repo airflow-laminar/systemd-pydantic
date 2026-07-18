@@ -1,0 +1,6 @@
+﻿systemd\_pydantic.SystemdCommandError
+=====================================
+
+.. currentmodule:: systemd_pydantic
+
+.. autoexception:: SystemdCommandError

@@ -1,0 +1,49 @@
+# systemd-pydantic
+
+Typed, YAML-friendly models and lifecycle tools for systemd services and timers.
+
+[![Build Status](https://github.com/airflow-laminar/systemd-pydantic/actions/workflows/build.yaml/badge.svg?branch=main&event=push)](https://github.com/airflow-laminar/systemd-pydantic/actions/workflows/build.yaml)
+[![codecov](https://codecov.io/gh/airflow-laminar/systemd-pydantic/branch/main/graph/badge.svg)](https://codecov.io/gh/airflow-laminar/systemd-pydantic)
+[![License](https://img.shields.io/github/license/airflow-laminar/systemd-pydantic)](https://github.com/airflow-laminar/systemd-pydantic)
+[![PyPI](https://img.shields.io/pypi/v/systemd-pydantic.svg)](https://pypi.python.org/pypi/systemd-pydantic)
+
+```python
+from systemd_pydantic import ServiceConfiguration, ServiceUnitConfiguration
+
+unit = ServiceUnitConfiguration(
+    unit={"description": "Example worker"},
+    service=ServiceConfiguration(
+        type="exec",
+        exec_start="/opt/jobs/worker",
+        restart="on-failure",
+    ),
+)
+
+print(unit.to_unit_file())
+```
+
+The package models unit-file sections, named service/timer collections,
+filesystem persistence, `systemctl` operations, and a convenience CLI used by
+external orchestrators.
+
+## Documentation
+
+- [Tutorial: render a service and timer](docs/src/tutorial.md)
+- [How-to guides](docs/src/how-to.md)
+- [Why services and timers share one model](docs/src/explanation.md)
+- [API reference](docs/src/api.md)
+
+Published documentation is available at
+[airflow-laminar.github.io/systemd-pydantic](https://airflow-laminar.github.io/systemd-pydantic/).
+
+## Ecosystem
+
+- [supervisor-pydantic](https://github.com/airflow-laminar/supervisor-pydantic) provides the analogous supervisord models.
+- [cron-pydantic](https://github.com/airflow-laminar/cron-pydantic) models traditional crontabs.
+- [airflow-systemd](https://github.com/airflow-laminar/airflow-systemd) orchestrates these services from Airflow.
+- [airflow-supervisor](https://github.com/airflow-laminar/airflow-supervisor) and [airflow-cron](https://github.com/airflow-laminar/airflow-cron) provide alternative Airflow integrations.
+- [airflow-pydantic](https://github.com/airflow-laminar/airflow-pydantic) supplies declarative Airflow models.
+- [airflow-config](https://github.com/airflow-laminar/airflow-config) loads YAML-based Airflow configurations.
+
+#### NOTE
+This library was generated using [copier](https://copier.readthedocs.io/en/stable/) from the [Base Python Project Template repository](https://github.com/python-project-templates/base).

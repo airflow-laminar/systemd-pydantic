@@ -1,0 +1,31 @@
+﻿systemd\_pydantic.CommandResult
+===============================
+
+.. currentmodule:: systemd_pydantic
+
+.. autoclass:: CommandResult
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~CommandResult.__init__
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~CommandResult.stderr
+      ~CommandResult.stdout
+      ~CommandResult.command
+      ~CommandResult.returncode
+   
+   

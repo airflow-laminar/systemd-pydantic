@@ -1,0 +1,6 @@
+﻿systemd\_pydantic.load\_convenience\_config
+===========================================
+
+.. currentmodule:: systemd_pydantic
+
+.. autofunction:: load_convenience_config

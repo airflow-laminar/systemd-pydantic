@@ -1,0 +1,6 @@
+﻿systemd\_pydantic.UnitInfo
+==========================
+
+.. currentmodule:: systemd_pydantic
+
+.. autopydantic_model:: UnitInfo
