@@ -4,19 +4,19 @@ import pytest
 from pydantic import ValidationError
 
 from systemd_pydantic import (
-    InstallSection,
-    ServiceSection,
-    SystemdServiceConfiguration,
-    SystemdTimerConfiguration,
-    TimerSection,
-    UnitSection,
+    InstallConfiguration,
+    ServiceConfiguration,
+    ServiceUnitConfiguration,
+    TimerConfiguration,
+    TimerUnitConfiguration,
+    UnitConfiguration,
 )
 
 
 def test_service_unit_file():
-    config = SystemdServiceConfiguration(
-        unit=UnitSection(description="Airflow worker", after=["network-online.target"], wants=["network-online.target"]),
-        service=ServiceSection(
+    config = ServiceUnitConfiguration(
+        unit=UnitConfiguration(description="Airflow worker", after=["network-online.target"], wants=["network-online.target"]),
+        service=ServiceConfiguration(
             type="exec",
             exec_start="/opt/jobs/worker --queue long-running",
             restart="on-failure",
@@ -26,7 +26,7 @@ def test_service_unit_file():
             environment={"MODE": "production", "LABEL": 'long running "job"'},
             kill_mode="control-group",
         ),
-        install=InstallSection(wanted_by=["multi-user.target"]),
+        install=InstallConfiguration(wanted_by=["multi-user.target"]),
     )
 
     assert (
@@ -55,7 +55,7 @@ WantedBy=multi-user.target
 
 
 def test_timer_unit_file_and_json_round_trip():
-    config = SystemdTimerConfiguration(
+    config = TimerUnitConfiguration(
         unit={"description": "Run cleanup"},
         timer={
             "on_boot_sec": timedelta(minutes=15),
@@ -84,11 +84,11 @@ Persistent=yes
 WantedBy=timers.target
 """
     )
-    assert SystemdTimerConfiguration.model_validate_json(config.model_dump_json()) == config
+    assert TimerUnitConfiguration.model_validate_json(config.model_dump_json()) == config
 
 
 def test_oneshot_allows_multiple_start_commands():
-    service = ServiceSection(type="oneshot", exec_start=["/usr/bin/prepare", "/usr/bin/run"], restart_sec=timedelta(microseconds=1))
+    service = ServiceConfiguration(type="oneshot", exec_start=["/usr/bin/prepare", "/usr/bin/run"], restart_sec=timedelta(microseconds=1))
 
     assert service.to_unit_file() == "[Service]\nType=oneshot\nExecStart=/usr/bin/prepare\nExecStart=/usr/bin/run\nRestartSec=0.000001s"
 
@@ -103,9 +103,9 @@ def test_oneshot_allows_multiple_start_commands():
 )
 def test_invalid_service_configuration(service):
     with pytest.raises(ValidationError):
-        ServiceSection.model_validate(service)
+        ServiceConfiguration.model_validate(service)
 
 
 def test_timer_requires_trigger():
     with pytest.raises(ValidationError):
-        TimerSection()
+        TimerConfiguration()

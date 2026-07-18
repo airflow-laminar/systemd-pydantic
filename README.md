@@ -9,49 +9,93 @@
 
 ## Overview
 
-`systemd-pydantic` provides typed, YAML-friendly models for generating systemd unit files. Timer support lives in this package because timers share systemd's common `[Unit]` and `[Install]` sections and normally activate a matching service unit.
+`systemd-pydantic` provides typed, YAML-friendly models, lifecycle clients, and convenience commands for systemd. Its layers mirror [`supervisor-pydantic`](https://github.com/airflow-laminar/supervisor-pydantic):
 
-The initial model surface covers common process-supervision and scheduling settings:
+- `ServiceConfiguration`: `[Service]` settings, analogous to `ProgramConfiguration`
+- `ServiceUnitConfiguration` and `TimerUnitConfiguration`: individual unit files
+- `SystemdConfiguration`: named service and timer collections, file persistence, Hydra loading, and basic lifecycle methods
+- `SystemdConvenienceConfiguration`: defaults and persisted JSON used by external tools such as Airflow
+- `SystemdClient`: typed `systemctl` operations and `UnitInfo` state
+- `_systemd_convenience`: lifecycle CLI for local or SSH-driven orchestration
 
-- `SystemdServiceConfiguration`: `[Unit]`, `[Service]`, and `[Install]`
-- `SystemdTimerConfiguration`: `[Unit]`, `[Timer]`, and `[Install]`
-- validation for required service commands, `Type=oneshot` command lists, `Type=dbus`, and timer triggers
-- `to_unit_file()` and the ecosystem-compatible `to_cfg()` alias
+Timer support lives in this package because timers share systemd's common `[Unit]` and `[Install]` sections and normally activate a matching service unit.
+
+## Configuration
 
 ```python
-from systemd_pydantic import SystemdServiceConfiguration
+from systemd_pydantic import ServiceConfiguration, ServiceUnitConfiguration, SystemdConfiguration
 
-service = SystemdServiceConfiguration(
-    unit={"description": "Long-running Airflow job"},
+config = SystemdConfiguration(
     service={
-        "type": "exec",
-        "exec_start": "/opt/jobs/run",
-        "restart": "on-failure",
-        "restart_sec": "5s",
-        "environment": {"MODE": "production"},
+        "long-running-job": ServiceUnitConfiguration(
+            unit={"description": "Long-running Airflow job"},
+            service=ServiceConfiguration(
+                type="exec",
+                exec_start="/opt/jobs/run",
+                restart="on-failure",
+                restart_sec="5s",
+                environment={"MODE": "production"},
+            ),
+        )
     },
-    install={"wanted_by": ["multi-user.target"]},
+    scope="user",
 )
 
-print(service.to_unit_file())
+config.write()
 ```
 
-```ini
-[Unit]
-Description=Long-running Airflow job
+Dictionary input works identically, making the configuration suitable for YAML and Hydra:
 
-[Service]
-Type=exec
-ExecStart=/opt/jobs/run
-Restart=on-failure
-RestartSec=5s
-Environment="MODE=production"
+```yaml
+# @package _global_
 
-[Install]
-WantedBy=multi-user.target
+service:
+  long-running-job:
+    unit:
+      description: Long-running Airflow job
+    service:
+      type: exec
+      exec_start: /opt/jobs/run
+      restart: on-failure
+      restart_sec: 5s
+      environment:
+        MODE: production
+scope: user
 ```
 
 Timer values accept systemd time strings or Python `timedelta` values. Repeated calendar and monotonic triggers render as repeated directives, preserving systemd semantics.
+
+`scope="system"` writes to `/etc/systemd/system` and calls `systemctl`. `scope="user"` writes to `~/.config/systemd/user` and calls `systemctl --user`. The executing user must have permission to write the selected unit directory and control its systemd manager.
+
+## Lifecycle client
+
+```python
+from systemd_pydantic import SystemdClient
+
+client = SystemdClient(config)
+client.daemon_reload()
+client.start_services()
+
+for unit in client.get_all_service_info().values():
+    print(unit.name, unit.active_state, unit.result)
+```
+
+`SystemdClient` also supports stopping, restarting, killing, enabling, and disabling units. A custom `CommandRunner` can be injected for tests or remote execution.
+
+## Convenience CLI
+
+`SystemdConvenienceConfiguration` persists its JSON representation alongside generated units. The `_systemd_convenience` CLI consumes that file and provides commands aligned with `supervisor-pydantic`:
+
+```text
+configure-systemd
+start-services
+check-services
+restart-services
+stop-services
+unconfigure-systemd
+```
+
+Systemd itself is already running, so there are intentionally no `start-systemd` or `stop-systemd` daemon commands.
 
 > [!NOTE]
 > This library was generated using [copier](https://copier.readthedocs.io/en/stable/) from the [Base Python Project Template repository](https://github.com/python-project-templates/base).

@@ -29,7 +29,9 @@ classifiers = [
 ]
 
 dependencies = [
+    "hydra-core",
     "pydantic>=2",
+    "typer",
 ]
 
 [project.optional-dependencies]
@@ -51,6 +53,7 @@ develop = [
 ]
 
 [project.scripts]
+_systemd_convenience = "systemd_pydantic.convenience.commands:main"
 
 [project.urls]
 Repository = "https://github.com/airflow-laminar/systemd-pydantic"
