@@ -1,7 +1,7 @@
 from pathlib import Path
+from typing import Annotated
 
 from typer import Argument, Exit, Option, Typer
-from typing_extensions import Annotated
 
 from ..client import SystemdClient
 from ..config import SystemdConvenienceConfiguration

@@ -15,7 +15,7 @@ class SystemdConvenienceConfiguration(SystemdConfiguration):
     timeout_stop_sec: TimeSpan = "30s"
     kill_mode: KillMode = "control-group"
     kill_signal: str = "SIGTERM"
-    success_exit_status: list[int | str] = [0]
+    success_exit_status: list[int | str] = Field(default_factory=lambda: [0])
     command_timeout: int = Field(default=60, ge=1)
 
     @model_validator(mode="after")
