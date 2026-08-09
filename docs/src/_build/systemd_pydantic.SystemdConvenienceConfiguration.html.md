@@ -1,8 +1,8 @@
 # systemd_pydantic.SystemdConvenienceConfiguration
 
-### *pydantic model* systemd_pydantic.SystemdConvenienceConfiguration
+### *pydantic model* systemd_pydantic.SystemdConvenienceConfiguration[[source]](../../../_modules/systemd_pydantic/config/convenience.html.md#SystemdConvenienceConfiguration)
 
-Bases: [`SystemdConfiguration`](systemd_pydantic.SystemdConfiguration.md#systemd_pydantic.SystemdConfiguration)
+Bases: [`SystemdConfiguration`](systemd_pydantic.SystemdConfiguration.html.md#systemd_pydantic.SystemdConfiguration)
 
 Systemd defaults and persisted state used by convenience commands.
 
@@ -18,4 +18,4 @@ Systemd defaults and persisted state used by convenience commands.
 
 #### *field* command_timeout *: int* *= 60*
 
-#### rmdir() → None
+#### rmdir() → None[[source]](../../../_modules/systemd_pydantic/config/convenience.html.md#SystemdConvenienceConfiguration.rmdir)

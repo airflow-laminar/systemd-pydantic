@@ -1,6 +1,6 @@
 # systemd_pydantic.SubprocessCommandRunner
 
-### *class* systemd_pydantic.SubprocessCommandRunner
+### *class* systemd_pydantic.SubprocessCommandRunner[[source]](../../../_modules/systemd_pydantic/client/systemctl.html.md#SubprocessCommandRunner)
 
 Bases: `object`
 

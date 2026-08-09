@@ -1,6 +1,6 @@
 # systemd_pydantic.CommandResult
 
-### *class* systemd_pydantic.CommandResult(command: 'list[str]', returncode: 'int', stdout: 'str' = '', stderr: 'str' = '')
+### *class* systemd_pydantic.CommandResult(command: 'list[str]', returncode: 'int', stdout: 'str' = '', stderr: 'str' = '')[[source]](../../../_modules/systemd_pydantic/client/systemctl.html.md#CommandResult)
 
 Bases: `object`
 

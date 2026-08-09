@@ -1,6 +1,6 @@
 # systemd_pydantic.CommandRunner
 
-### *class* systemd_pydantic.CommandRunner(\*args, \*\*kwargs)
+### *class* systemd_pydantic.CommandRunner(\*args, \*\*kwargs)[[source]](../../../_modules/systemd_pydantic/client/systemctl.html.md#CommandRunner)
 
 Bases: `Protocol`
 

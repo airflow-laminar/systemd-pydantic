@@ -1,6 +1,6 @@
 # systemd_pydantic.UnitConfiguration
 
-### *pydantic model* systemd_pydantic.UnitConfiguration
+### *pydantic model* systemd_pydantic.UnitConfiguration[[source]](../../../_modules/systemd_pydantic/models.html.md#UnitConfiguration)
 
 Bases: `_Section`
 

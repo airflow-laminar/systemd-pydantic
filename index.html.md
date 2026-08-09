@@ -28,10 +28,10 @@ external orchestrators.
 
 ## Documentation
 
-- [Tutorial: render a service and timer](docs/src/tutorial.md)
-- [How-to guides](docs/src/how-to.md)
-- [Why services and timers share one model](docs/src/explanation.md)
-- [API reference](docs/src/api.md)
+- [Tutorial: render a service and timer](docs/src/tutorial.html.md)
+- [How-to guides](docs/src/how-to.html.md)
+- [Why services and timers share one model](docs/src/explanation.html.md)
+- [API reference](docs/src/api.html.md)
 
 Published documentation is available at
 [airflow-laminar.github.io/systemd-pydantic](https://airflow-laminar.github.io/systemd-pydantic/).

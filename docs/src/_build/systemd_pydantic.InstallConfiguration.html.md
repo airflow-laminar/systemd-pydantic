@@ -1,6 +1,6 @@
 # systemd_pydantic.InstallConfiguration
 
-### *pydantic model* systemd_pydantic.InstallConfiguration
+### *pydantic model* systemd_pydantic.InstallConfiguration[[source]](../../../_modules/systemd_pydantic/models.html.md#InstallConfiguration)
 
 Bases: `_Section`
 

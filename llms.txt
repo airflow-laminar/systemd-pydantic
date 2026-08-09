@@ -2,34 +2,31 @@
 
 > Pydantic models and lifecycle tools for systemd services and timers
 
-
-the systemd-pydantic authors
-
 ## Pages
 
 - [systemd-pydantic](index.html.md): Typed, YAML-friendly models and lifecycle tools for systemd services and timers.
-- [API reference](docs/src/api.html.md): The public API is re-exported from `systemd_pydantic`.
-- [Why services and timers share one model](docs/src/explanation.html.md): A systemd timer does not run a command by itself. It activates another unit,
+- [Tutorial: render a service and timer](docs/src/tutorial.html.md): In this tutorial, we will model a oneshot service, schedule it with a timer, and write both unit files to a local build directory.
 - [How-to guides](docs/src/how-to.html.md): These guides cover common systemd configuration and lifecycle tasks.
-- [systemd_pydantic.CommandResult](docs/src/_build/systemd_pydantic.CommandResult.html.md): Bases: `object`
-- [systemd_pydantic.CommandRunner](docs/src/_build/systemd_pydantic.CommandRunner.html.md): Bases: `Protocol`
-- [systemd_pydantic.InstallConfiguration](docs/src/_build/systemd_pydantic.InstallConfiguration.html.md): Bases: `_Section`
-- [systemd_pydantic.SSHCommandRunner](docs/src/_build/systemd_pydantic.SSHCommandRunner.html.md): Bases: `object`
-- [systemd_pydantic.ServiceConfiguration](docs/src/_build/systemd_pydantic.ServiceConfiguration.html.md): Bases: `_Section`
-- [systemd_pydantic.ServiceUnitConfiguration](docs/src/_build/systemd_pydantic.ServiceUnitConfiguration.html.md): Bases: `_SystemdConfiguration`
-- [systemd_pydantic.SubprocessCommandRunner](docs/src/_build/systemd_pydantic.SubprocessCommandRunner.html.md): Bases: `object`
-- [systemd_pydantic.SystemdClient](docs/src/_build/systemd_pydantic.SystemdClient.html.md): Bases: `object`
-- [systemd_pydantic.SystemdCommandError](docs/src/_build/systemd_pydantic.SystemdCommandError.html.md): Bases: `RuntimeError`
-- [systemd_pydantic.SystemdConfiguration](docs/src/_build/systemd_pydantic.SystemdConfiguration.html.md): Bases: `BaseModel`
-- [systemd_pydantic.SystemdConvenienceConfiguration](docs/src/_build/systemd_pydantic.SystemdConvenienceConfiguration.html.md): Bases: [`SystemdConfiguration`](systemd_pydantic.SystemdConfiguration.md#systemd_pydantic.SystemdCon...
-- [systemd_pydantic.TimerConfiguration](docs/src/_build/systemd_pydantic.TimerConfiguration.html.md): Bases: `_Section`
-- [systemd_pydantic.TimerUnitConfiguration](docs/src/_build/systemd_pydantic.TimerUnitConfiguration.html.md): Bases: `_SystemdConfiguration`
-- [systemd_pydantic.UnitConfiguration](docs/src/_build/systemd_pydantic.UnitConfiguration.html.md): Bases: `_Section`
-- [systemd_pydantic.UnitInfo](docs/src/_build/systemd_pydantic.UnitInfo.html.md): Bases: `BaseModel`
-- [systemd_pydantic.load_config](docs/src/_build/systemd_pydantic.load_config.html.md): Page content
-- [systemd_pydantic.load_convenience_config](docs/src/_build/systemd_pydantic.load_convenience_config.html.md): Page content
-- [Tutorial: render a service and timer](docs/src/tutorial.html.md): In this tutorial, we will model a oneshot service, schedule it with a timer, and
+- [Why services and timers share one model](docs/src/explanation.html.md): A systemd timer does not run a command by itself. It activates another unit, normally a service with the same base name. Both files use the common [Unit] and...
+- [API reference](docs/src/api.html.md): The public API is re-exported from systemd_pydantic.
+- [systemd_pydantic.UnitConfiguration](docs/src/_build/systemd_pydantic.UnitConfiguration.html.md): Bases: _Section
+- [systemd_pydantic.ServiceConfiguration](docs/src/_build/systemd_pydantic.ServiceConfiguration.html.md): Bases: _Section
+- [systemd_pydantic.TimerConfiguration](docs/src/_build/systemd_pydantic.TimerConfiguration.html.md): Bases: _Section
+- [systemd_pydantic.InstallConfiguration](docs/src/_build/systemd_pydantic.InstallConfiguration.html.md): Bases: _Section
+- [systemd_pydantic.ServiceUnitConfiguration](docs/src/_build/systemd_pydantic.ServiceUnitConfiguration.html.md): Bases: _SystemdConfiguration
+- [systemd_pydantic.TimerUnitConfiguration](docs/src/_build/systemd_pydantic.TimerUnitConfiguration.html.md): Bases: _SystemdConfiguration
+- [systemd_pydantic.SystemdConfiguration](docs/src/_build/systemd_pydantic.SystemdConfiguration.html.md): Bases: BaseModel
+- [systemd_pydantic.SystemdConvenienceConfiguration](docs/src/_build/systemd_pydantic.SystemdConvenienceConfiguration.html.md): Bases: SystemdConfiguration
+- [systemd_pydantic.SystemdClient](docs/src/_build/systemd_pydantic.SystemdClient.html.md): Bases: object
+- [systemd_pydantic.UnitInfo](docs/src/_build/systemd_pydantic.UnitInfo.html.md): Bases: BaseModel
+- [systemd_pydantic.CommandResult](docs/src/_build/systemd_pydantic.CommandResult.html.md): Bases: object
+- [systemd_pydantic.CommandRunner](docs/src/_build/systemd_pydantic.CommandRunner.html.md): Bases: Protocol
+- [systemd_pydantic.SubprocessCommandRunner](docs/src/_build/systemd_pydantic.SubprocessCommandRunner.html.md): Bases: object
+- [systemd_pydantic.SSHCommandRunner](docs/src/_build/systemd_pydantic.SSHCommandRunner.html.md): Bases: object
+- [systemd_pydantic.SystemdCommandError](docs/src/_build/systemd_pydantic.SystemdCommandError.html.md): Bases: RuntimeError
+- [systemd_pydantic.load_config](docs/src/_build/systemd_pydantic.load_config.html.md): Documentation page.
+- [systemd_pydantic.load_convenience_config](docs/src/_build/systemd_pydantic.load_convenience_config.html.md): Documentation page.
 
----
+## Full documentation
 
-For more comprehensive documentation, see [llms-full.txt](llms-full.txt)
+- [llms-full.txt](llms-full.txt): All pages in one document.

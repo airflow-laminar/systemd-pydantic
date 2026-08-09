@@ -1,6 +1,6 @@
 # systemd_pydantic.ServiceConfiguration
 
-### *pydantic model* systemd_pydantic.ServiceConfiguration
+### *pydantic model* systemd_pydantic.ServiceConfiguration[[source]](../../../_modules/systemd_pydantic/models.html.md#ServiceConfiguration)
 
 Bases: `_Section`
 

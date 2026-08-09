@@ -1,6 +1,6 @@
 # systemd_pydantic.TimerConfiguration
 
-### *pydantic model* systemd_pydantic.TimerConfiguration
+### *pydantic model* systemd_pydantic.TimerConfiguration[[source]](../../../_modules/systemd_pydantic/models.html.md#TimerConfiguration)
 
 Bases: `_Section`
 
