@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import cast
 
 from pydantic import Field, PrivateAttr, model_validator
 
@@ -15,7 +16,7 @@ class SystemdConvenienceConfiguration(SystemdConfiguration):
     timeout_stop_sec: TimeSpan = "30s"
     kill_mode: KillMode = "control-group"
     kill_signal: str = "SIGTERM"
-    success_exit_status: list[int | str] = Field(default_factory=lambda: [0])
+    success_exit_status: list[int | str] = Field(default_factory=lambda: cast(list[int | str], [0]))
     command_timeout: int = Field(default=60, ge=1)
 
     @model_validator(mode="after")
